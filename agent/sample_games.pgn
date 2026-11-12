@@ -1,0 +1,40 @@
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "test_player"]
+[Black "opponent"]
+[Result "*"]
+
+1. e4 b5 2. Bxb5 f5 3. Bxd7+ Kxd7 4. exf5 Bb7 5. f4 Bxg2 6. b4 Bxh1 7. Qg4 c5 8. bxc5 Be4 9. Qxg7 Bxg7 10. Kf2 Bxc2 11. d4 Bxd4+ 12. Ke1 Bxa1 13. f6 exf6 14. Kf2 Bxb1 15. Kg2 Bxa2 16. Kh1 f5 17. Nh3 Bb3 18. Ba3 Nh6 19. Bc1 Bd1 20. Kg2 Be2 21. Kg1 Bd1 22. c6+ Kxc6 23. Kg2 Ba4 24. Bb2 Bxb2 25. Kh1 Ba3 26. Nf2 Bb2 27. h4 Qxh4+ 28. Kg1 Qxf2+ 29. Kh1 Qxf4 30. Kg2 Na6 *
+
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "test_player"]
+[Black "opponent"]
+[Result "*"]
+
+1. b4 g5 2. c4 Bg7 3. Qc2 Bxa1 4. Qxh7 Rxh7 5. e4 Rxh2 6. Rxh2 b5 7. cxb5 f5 8. exf5 Bb7 9. Rh8 Bxh8 10. f6 exf6 11. f4 gxf4 12. b6 axb6 13. Kd1 Bxg2 14. Bxg2 Rxa2 15. d3 Rxg2 16. Bxf4 Rxg1+ 17. Ke2 Rxb1 18. Kf3 Rxb4 19. Bxc7 Qxc7 20. Ke2 Bg7 21. Kd1 Rd4 22. Ke2 Rxd3 23. Kxd3 Qh2 24. Ke4 Qh7+ 25. Kd5 Qh5+ 26. Ke4 Qe2+ 27. Kf4 Qb2 28. Kf3 Qb3+ 29. Ke2 Qc3 30. Kf1 Qb2 *
+
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "test_player"]
+[Black "opponent"]
+[Result "*"]
+
+1. b4 c5 2. bxc5 b5 3. cxb6 Qxb6 4. Bb2 Qxf2+ 5. Kxf2 Bb7 6. Bxg7 Bxg7 7. g4 Bxh1 8. Qc1 Bxa1 9. a4 Bd4+ 10. Ke1 Bxg1 11. d4 Bxd4 12. Qg5 f5 13. gxf5 Bg1 14. Qxg8+ Rxg8 15. a5 Bxh2 16. Bh3 Bb7 17. Na3 Be4 18. Kd2 Bxc2 19. Kc3 Bxf5 20. Bxf5 Be5+ 21. Kb3 Bb2 22. Kc4 Bxa3 23. Bxd7+ Kxd7 24. e4 Rg7 25. Kd4 Bb2+ 26. Kd5 Rg3 27. Kc4 Rg1 28. Kb3 Bc3 29. Kxc3 Rg5 30. Kc2 Rxa5 *
+
+[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "test_player"]
+[Black "opponent"]
+[Result "*"]
+
+1. b4 e5 2. b5 Bb4 3. Bb2 Bxd2+ 4. Kxd2 f5 5. Bxe5 f4 6. Bxg7 c5 7. bxc6 dxc6+ 8. Bd4 Qxd4+ 9. Ke1 Qxa1 10. Qd7+ Kxd7 11. c4 Qxa2 12. Nc3 Qxe2+ 13. Kxe2 Kc7 14. Nb1 Nh6 15. g4 Nxg4 16. Kd1 Nxh2 17. Rxh2 c5 18. Rxh7+ Rxh7 19. Ke1 Rh5 20. Nc3 Rh2 21. f3 b5 22. Nd5+ Kd6 23. cxb5 Kxd5 24. Be2 Rxe2+ 25. Nxe2 Kd6 26. Nxf4 c4 27. Kd1 Kc7 28. Ng2 Kd6 29. Nf4 Ke7 30. Nd3 cxd3 *
+

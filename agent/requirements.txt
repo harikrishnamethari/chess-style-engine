@@ -1,0 +1,7 @@
+python-chess>=1.10
+torch>=2.0
+
+# optional, only needed if you set ANTHROPIC_API_KEY or OPENAI_API_KEY to
+# enable LLM-driven planning instead of the built-in heuristic planner
+anthropic>=0.30
+openai>=1.30

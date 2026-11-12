@@ -1,0 +1,89 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment secrets
+.env.local
+.env.*.local
+*.env
+
+# Keep example env
+!.env.example
+
+# PyTorch checkpoints and model weights
+*.pt
+*.pth
+*.onnx
+*.bin
+checkpoints/
+models/*.pt
+models/*.pth
+
+# Chess datasets & huge downloads
+*.pgn.zst
+*.zst
+*.tar.gz
+*.zip
+data/*.csv
+data/*.pgn
+# Keep synthetic demo data tracked
+!data/sample_data.csv
+!agent/sample_games.pgn
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Jupyter / Colab
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# IDE / Editor configs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs and DB files
+*.log
+*.sqlite3
+*.db
+

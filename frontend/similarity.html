@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chess Style Engine — Style Similarity Map</title>
+  <meta name="description" content="Explore how different chess playing styles cluster together in latent embedding space."/>
+  <link rel="stylesheet" href="style.css"/>
+  <!-- Chart.js for scatter plot -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="navbar-brand">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
+    </svg>
+    Chess Style Engine
+  </a>
+  <div class="navbar-links">
+    <a href="index.html">Dashboard</a>
+    <a href="play.html">Play</a>
+    <a href="similarity.html" class="active">Style Map</a>
+  </div>
+</nav>
+
+<main class="container">
+
+  <div class="page-hero">
+    <h1 class="page-title">Style Similarity Map</h1>
+    <p class="page-subtitle">
+      2D PCA projection of learned style embeddings. Players close together have similar move-choice distributions — the model has discovered latent style clusters.
+    </p>
+  </div>
+
+  <div class="two-col">
+
+    <!-- Chart -->
+    <div class="card" style="grid-column:1/-1;">
+      <canvas id="similarity-canvas" height="480"></canvas>
+    </div>
+
+    <!-- Similarity calculator -->
+    <div class="card">
+      <h3 style="font-weight:700;margin-bottom:1rem;">Pairwise Similarity</h3>
+      <p style="font-size:.85rem;color:var(--text-secondary);margin-bottom:1rem;">
+        Enter two Lichess usernames (both must have uploaded a PGN on the Dashboard first).
+      </p>
+      <div style="display:flex;flex-direction:column;gap:.75rem;">
+        <input class="input" type="text" id="sim-user-a" placeholder="Username A"/>
+        <input class="input" type="text" id="sim-user-b" placeholder="Username B"/>
+        <button class="btn btn-primary" id="sim-btn">Compare Styles</button>
+      </div>
+      <div id="sim-result" style="margin-top:1rem;display:none;"></div>
+    </div>
+
+    <!-- Legend & explanation -->
+    <div class="card">
+      <h3 style="font-weight:700;margin-bottom:1rem;">Archetype Legend</h3>
+      <div style="display:flex;flex-direction:column;gap:.75rem;">
+        <div class="flex items-center gap-1">
+          <span style="width:12px;height:12px;border-radius:50%;background:#6366f1;display:inline-block;flex-shrink:0;"></span>
+          <div><strong>Universal</strong> — Adaptable, strong in all phases</div>
+        </div>
+        <div class="flex items-center gap-1">
+          <span style="width:12px;height:12px;border-radius:50%;background:#ef4444;display:inline-block;flex-shrink:0;"></span>
+          <div><strong>Tactical</strong> — High capture rate, sharp combinative play</div>
+        </div>
+        <div class="flex items-center gap-1">
+          <span style="width:12px;height:12px;border-radius:50%;background:#10b981;display:inline-block;flex-shrink:0;"></span>
+          <div><strong>Positional</strong> — Low CP loss, patient manoeuvring</div>
+        </div>
+        <div class="flex items-center gap-1">
+          <span style="width:12px;height:12px;border-radius:50%;background:#f59e0b;display:inline-block;flex-shrink:0;"></span>
+          <div><strong>Attacking</strong> — Sacrificial, high-risk/reward</div>
+        </div>
+        <div class="flex items-center gap-1">
+          <span style="width:12px;height:12px;border-radius:50%;background:#8b5cf6;display:inline-block;flex-shrink:0;"></span>
+          <div><strong>Defensive</strong> — Solid structures, avoids confrontation</div>
+        </div>
+        <hr style="border-color:var(--glass-border);margin:.25rem 0;"/>
+        <div class="flex items-center gap-1">
+          <span style="width:14px;height:14px;border-radius:50%;background:#ffffff;border:2px solid #6366f1;display:inline-block;flex-shrink:0;"></span>
+          <div><strong>You</strong> — Your uploaded style (after PGN analysis)</div>
+        </div>
+      </div>
+
+      <div style="margin-top:1.5rem;padding:1rem;background:var(--bg-elevated);border-radius:var(--radius-sm);">
+        <p style="font-size:.75rem;color:var(--text-secondary);line-height:1.7;">
+          <strong>How it works:</strong> The GRU history encoder maps each player's 10-game stat sequence into a 32-dimensional style embedding.
+          PCA reduces to 2D for visualisation. Cosine similarity between two embeddings measures how closely two players' policies match.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div id="toast-container"></div>
+
+<script type="module">
+import { getStyleSimilarity } from './js/api.js';
+import { toast, setLoading } from './js/ui.js';
+
+// ── Mock 2D projection data (in production: returned by /api/v1/similarity/map) ──
+const PLAYERS = [
+  { name: 'Magnus Carlsen',   x: 78,  y: 65,  style: 'Universal',  color: '#6366f1' },
+  { name: 'Hikaru Nakamura',  x: 88,  y: 22,  style: 'Tactical',   color: '#ef4444' },
+  { name: 'Fabiano Caruana',  x: 35,  y: 82,  style: 'Positional', color: '#10b981' },
+  { name: 'Mikhail Tal',      x: 95,  y: -15, style: 'Attacking',  color: '#f59e0b' },
+  { name: 'Tigran Petrosian', x: -55, y: 55,  style: 'Defensive',  color: '#8b5cf6' },
+  { name: 'Garry Kasparov',   x: 82,  y: 10,  style: 'Tactical',   color: '#ef4444' },
+  { name: 'Anatoly Karpov',   x: 25,  y: 72,  style: 'Positional', color: '#10b981' },
+  { name: 'Bobby Fischer',    x: 92,  y: 50,  style: 'Universal',  color: '#6366f1' },
+  { name: 'Your Style ★',    x: 55,  y: 38,  style: 'You',        color: '#ffffff', isUser: true },
+];
+
+const datasets = PLAYERS.map(p => ({
+  label: p.name,
+  data: [{ x: p.x, y: p.y }],
+  backgroundColor: p.isUser ? 'rgba(255,255,255,0.9)' : p.color + 'cc',
+  borderColor:     p.isUser ? '#6366f1' : p.color,
+  borderWidth:     p.isUser ? 3 : 1.5,
+  pointRadius:     p.isUser ? 10 : 8,
+  pointHoverRadius: p.isUser ? 13 : 11,
+}));
+
+const ctx = document.getElementById('similarity-canvas').getContext('2d');
+new Chart(ctx, {
+  type: 'scatter',
+  data: { datasets },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: 'rgba(13,13,20,0.95)',
+        borderColor: 'rgba(255,255,255,0.08)',
+        borderWidth: 1,
+        padding: 12,
+        callbacks: {
+          label: (ctx) => {
+            const p = PLAYERS[ctx.datasetIndex];
+            return [`${p.name}`, `Style: ${p.style}`];
+          }
+        }
+      },
+    },
+    scales: {
+      x: {
+        title: { display: true, text: 'Embedding Dimension 1 (PC1)', color: '#8b8baa' },
+        grid: { color: 'rgba(255,255,255,0.05)' },
+        ticks: { color: '#555570' },
+      },
+      y: {
+        title: { display: true, text: 'Embedding Dimension 2 (PC2)', color: '#8b8baa' },
+        grid: { color: 'rgba(255,255,255,0.05)' },
+        ticks: { color: '#555570' },
+      }
+    },
+  }
+});
+
+// ── Pairwise similarity form ──────────────────────────────
+const simBtn = document.getElementById('sim-btn');
+simBtn.addEventListener('click', async () => {
+  const a = document.getElementById('sim-user-a').value.trim();
+  const b = document.getElementById('sim-user-b').value.trim();
+  if (!a || !b) { toast('Enter both usernames', 'error'); return; }
+
+  setLoading(simBtn, true, 'Computing…');
+  try {
+    const data = await getStyleSimilarity(a, b);
+    renderSimilarity(data);
+  } catch (e) {
+    toast(e.message, 'error');
+  } finally {
+    setLoading(simBtn, false);
+  }
+});
+
+function renderSimilarity(data) {
+  const sim = data.cosine_similarity;
+  const pct = (sim * 100).toFixed(1);
+  const color = sim > 0.8 ? 'var(--green)' : sim > 0.5 ? 'var(--amber)' : 'var(--red)';
+  const desc  = sim > 0.8 ? 'Very similar playing styles'
+              : sim > 0.5 ? 'Moderately similar styles'
+              :              'Quite different styles';
+
+  const el = document.getElementById('sim-result');
+  el.style.display = '';
+  el.innerHTML = `
+    <div style="padding:1.25rem;background:var(--bg-elevated);border-radius:var(--radius-md);border:1px solid var(--glass-border);">
+      <div class="flex justify-between items-center" style="margin-bottom:.75rem;">
+        <span style="font-weight:600;">${data.username_a} vs ${data.username_b}</span>
+        <span style="font-size:1.6rem;font-weight:800;color:${color};">${pct}%</span>
+      </div>
+      <div class="progress"><div class="progress-fill" style="width:${pct}%;background:${color};"></div></div>
+      <p style="font-size:.8rem;color:var(--text-secondary);margin-top:.5rem;">${desc}</p>
+    </div>`;
+}
+</script>
+</body>
+</html>

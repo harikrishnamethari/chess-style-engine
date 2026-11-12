@@ -1,0 +1,22 @@
+# ── ML core ───────────────────────────────────────────────
+torch>=2.0
+python-chess>=1.10
+numpy>=1.24
+zstandard>=0.21        # for Lichess .zst PGN downloads
+
+# ── Backend ───────────────────────────────────────────────
+fastapi>=0.110
+uvicorn[standard]>=0.29
+sqlalchemy>=2.0
+psycopg2-binary>=2.9   # PostgreSQL driver
+redis>=5.0             # Redis client
+python-multipart>=0.0.9 # file uploads
+
+# ── Demo / old frontend ────────────────────────────────────
+streamlit>=1.28        # kept for the Streamlit demo in demo/app.py
+requests>=2.28
+
+# ── Dev / testing ──────────────────────────────────────────
+pytest>=8.0
+pytest-asyncio>=0.23
+httpx>=0.27            # test async FastAPI endpoints

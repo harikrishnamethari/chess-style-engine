@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chess Style Engine — Play</title>
+  <meta name="description" content="Play chess against a style-conditioned AI — choose any playing style."/>
+  <link rel="stylesheet" href="style.css"/>
+  <!-- chessboard.js CDN -->
+  <link rel="stylesheet"
+    href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css"
+    crossorigin="anonymous"/>
+  <style>
+    #board-wrap { width: 100%; max-width: 480px; margin: 0 auto; }
+    .board-wrapper { border-radius: var(--radius-md); overflow: hidden; }
+    /* Override chessboard.js board colours */
+    .white-1e1d7 { background: #f0d9b5 !important; }
+    .black-3c85d { background: #b58863 !important; }
+    .highlight1-32417, .highlight2-9c5d2 { background: rgba(99,102,241,0.55) !important; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="navbar-brand">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
+    </svg>
+    Chess Style Engine
+  </a>
+  <div class="navbar-links">
+    <a href="index.html">Dashboard</a>
+    <a href="play.html" class="active">Play</a>
+    <a href="similarity.html">Style Map</a>
+  </div>
+</nav>
+
+<main class="container">
+
+  <div class="page-hero">
+    <h1 class="page-title">Play vs Style Engine</h1>
+    <p class="page-subtitle">Make a move — the engine responds with top-k suggestions conditioned on the chosen style.</p>
+  </div>
+
+  <div class="two-col">
+
+    <!-- Left: board -->
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;gap:1.25rem;">
+      <div id="board-wrap">
+        <div id="board" class="board-wrapper"></div>
+      </div>
+
+      <!-- Controls -->
+      <div class="flex gap-1" style="width:100%;justify-content:center;flex-wrap:wrap;">
+        <button class="btn btn-ghost" id="btn-flip">⇅ Flip</button>
+        <button class="btn btn-ghost" id="btn-reset">↺ Reset</button>
+        <button class="btn btn-ghost" id="btn-undo">← Undo</button>
+        <button class="btn btn-primary" id="btn-engine-move" disabled>▶ Play Engine Move</button>
+      </div>
+
+      <!-- FEN display -->
+      <div style="width:100%;padding:.75rem;background:var(--bg-elevated);border-radius:var(--radius-sm);">
+        <p style="font-size:.7rem;color:var(--text-secondary);margin-bottom:.25rem;">CURRENT FEN</p>
+        <p id="fen-display" class="mono" style="font-size:.7rem;color:var(--text-primary);word-break:break-all;"></p>
+      </div>
+    </div>
+
+    <!-- Right: engine panel -->
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+
+      <!-- Connection status + style selector -->
+      <div class="card">
+        <div class="flex items-center justify-between mb-1">
+          <h3 style="font-weight:700;font-size:.95rem;">Engine Connection</h3>
+          <div class="flex items-center gap-05">
+            <span class="dot" id="conn-dot" style="background:var(--red);"></span>
+            <span id="conn-label" style="font-size:.8rem;color:var(--text-secondary);">Disconnected</span>
+          </div>
+        </div>
+        <button class="btn btn-ghost" id="btn-connect" style="width:100%;margin-top:.5rem;">Connect to Engine</button>
+      </div>
+
+      <div class="card">
+        <label style="font-size:.8rem;color:var(--text-secondary);display:block;margin-bottom:.5rem;">Playing Style</label>
+        <select class="select" id="style-select">
+          <option value="balanced">⚖ Balanced — Default</option>
+          <option value="aggressive">⚔ Highly Aggressive</option>
+          <option value="positional">🏰 Positional / Patient</option>
+          <option value="tactical">🎯 Tactical / Combinative</option>
+        </select>
+        <div style="margin-top:.75rem;display:flex;flex-direction:column;gap:.4rem;" id="style-bars-mini"></div>
+      </div>
+
+      <!-- Analysis panel -->
+      <div class="card" id="analysis-panel">
+        <div class="flex items-center justify-between mb-1">
+          <h3 style="font-weight:700;font-size:.95rem;">Engine Analysis</h3>
+          <span id="analysis-thinking" style="font-size:.8rem;color:var(--accent-bright);display:none;">Thinking…</span>
+        </div>
+
+        <div id="move-list" style="display:flex;flex-direction:column;gap:.4rem;min-height:140px;">
+          <p style="color:var(--text-muted);font-size:.85rem;padding:.5rem 0;">Make a move to see engine suggestions.</p>
+        </div>
+
+        <div id="blunder-area" style="margin-top:1rem;display:none;"></div>
+      </div>
+
+      <!-- Move history -->
+      <div class="card">
+        <h3 style="font-weight:700;font-size:.95rem;margin-bottom:.75rem;">Move History</h3>
+        <div id="move-history" class="mono" style="font-size:.8rem;color:var(--text-secondary);min-height:40px;word-break:break-word;"></div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<div id="toast-container"></div>
+
+<!-- jQuery (required by chessboard.js) -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js" crossorigin="anonymous"></script>
+<!-- chess.js for move validation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+<script type="module">
+import { EngineSocket } from './js/api.js';
+import { toast, blunderBadge } from './js/ui.js';
+
+// ── Chess game state ──────────────────────────────────────
+const chess = new Chess();
+let board, engineSocket, topMovesCache = [];
+
+const STYLE_HISTORIES = {
+  balanced:   Array(10).fill([25.0, 0.12, 15.0]),
+  aggressive: Array(10).fill([65.0, 0.28, 35.0]),
+  positional: Array(10).fill([15.0, 0.07, 10.0]),
+  tactical:   Array(10).fill([50.0, 0.22, 20.0]),
+};
+
+const STYLE_LABELS = {
+  balanced:   { Aggression: .4, Sharpness: .3, Patience: .5 },
+  aggressive: { Aggression: .9, Sharpness: .75, Patience: .15 },
+  positional: { Aggression: .2, Sharpness: .15, Patience: .9 },
+  tactical:   { Aggression: .65, Sharpness: .7, Patience: .35 },
+};
+
+// ── Board setup ───────────────────────────────────────────
+function initBoard() {
+  board = Chessboard('board', {
+    draggable: true,
+    position: 'start',
+    onDrop: handleDrop,
+    onSnapEnd: () => board.position(chess.fen()),
+    pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+  });
+  updateFenDisplay();
+}
+
+function handleDrop(from, to) {
+  const move = chess.move({ from, to, promotion: 'q' });
+  if (!move) return 'snapback';
+  updateFenDisplay();
+  updateMoveHistory();
+  requestEvaluation();
+  return undefined;
+}
+
+function updateFenDisplay() {
+  document.getElementById('fen-display').textContent = chess.fen();
+}
+
+function updateMoveHistory() {
+  const history = chess.history();
+  document.getElementById('move-history').textContent =
+    history.length ? history.join('  ') : '—';
+}
+
+// ── Engine connection ─────────────────────────────────────
+const connDot   = document.getElementById('conn-dot');
+const connLabel = document.getElementById('conn-label');
+const btnConnect= document.getElementById('btn-connect');
+const btnEngineMove = document.getElementById('btn-engine-move');
+
+btnConnect.addEventListener('click', () => {
+  if (engineSocket) { engineSocket.disconnect(); engineSocket = null; }
+  engineSocket = new EngineSocket({
+    onConnect: () => {
+      connDot.className   = 'dot dot-green';
+      connLabel.textContent = 'Connected';
+      btnConnect.textContent = 'Reconnect';
+      btnEngineMove.disabled = false;
+      sendStyleToEngine();
+      toast('Engine connected', 'success');
+    },
+    onDisconnect: () => {
+      connDot.className   = 'dot';
+      connDot.style.background = 'var(--red)';
+      connLabel.textContent = 'Disconnected';
+      btnEngineMove.disabled = true;
+    },
+    onEvaluation: renderEvaluation,
+    onError: (msg) => toast(msg, 'error'),
+  });
+  engineSocket.connect();
+});
+
+// ── Style selector ────────────────────────────────────────
+const styleSelect = document.getElementById('style-select');
+styleSelect.addEventListener('change', () => {
+  sendStyleToEngine();
+  renderStyleBars(styleSelect.value);
+  if (!chess.game_over()) requestEvaluation();
+});
+
+function sendStyleToEngine() {
+  if (!engineSocket) return;
+  engineSocket.setStyle(STYLE_HISTORIES[styleSelect.value]);
+}
+
+function renderStyleBars(style) {
+  const dims = STYLE_LABELS[style];
+  document.getElementById('style-bars-mini').innerHTML = Object.entries(dims).map(([k, v]) => `
+    <div>
+      <div class="flex justify-between" style="font-size:.72rem;margin-bottom:.2rem;">
+        <span style="color:var(--text-secondary)">${k}</span>
+        <span style="color:var(--text-muted)">${(v*100).toFixed(0)}%</span>
+      </div>
+      <div class="progress" style="height:4px;">
+        <div class="progress-fill" style="width:${(v*100).toFixed(1)}%;"></div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Evaluation ────────────────────────────────────────────
+function requestEvaluation() {
+  if (!engineSocket || chess.game_over()) return;
+  document.getElementById('analysis-thinking').style.display = '';
+  engineSocket.evaluate(chess.fen(), 5);
+}
+
+function renderEvaluation(data) {
+  document.getElementById('analysis-thinking').style.display = 'none';
+  topMovesCache = data.top_moves || [];
+
+  document.getElementById('move-list').innerHTML = topMovesCache.map((m, i) => `
+    <div class="move-row ${i === 0 ? 'top-move' : ''}" data-uci="${m.move}">
+      <span class="move-uci">${m.move}</span>
+      <div class="flex items-center gap-05">
+        <div class="progress" style="width:80px;height:5px;">
+          <div class="progress-fill" style="width:${(m.prob * 100 * 5).toFixed(1)}%;"></div>
+        </div>
+        <span class="move-prob">${(m.prob * 100).toFixed(1)}%</span>
+      </div>
+    </div>`).join('');
+
+  // Clickable rows apply the move
+  document.querySelectorAll('.move-row').forEach(row => {
+    row.addEventListener('click', () => applyMove(row.dataset.uci));
+  });
+
+  // Blunder risk
+  const blunder = document.getElementById('blunder-area');
+  blunder.style.display = '';
+  blunder.innerHTML = blunderBadge(data.blunder_risk);
+}
+
+function applyMove(uci) {
+  const from = uci.slice(0, 2), to = uci.slice(2, 4);
+  const promo = uci.length > 4 ? uci[4] : 'q';
+  const move = chess.move({ from, to, promotion: promo });
+  if (!move) return;
+  board.position(chess.fen());
+  updateFenDisplay();
+  updateMoveHistory();
+  requestEvaluation();
+}
+
+// ── Buttons ───────────────────────────────────────────────
+document.getElementById('btn-flip').addEventListener('click', () => board.flip());
+document.getElementById('btn-reset').addEventListener('click', () => {
+  chess.reset();
+  board.start();
+  updateFenDisplay();
+  updateMoveHistory();
+  document.getElementById('move-list').innerHTML = '<p style="color:var(--text-muted);font-size:.85rem;padding:.5rem 0;">Make a move to see engine suggestions.</p>';
+  document.getElementById('blunder-area').style.display = 'none';
+});
+document.getElementById('btn-undo').addEventListener('click', () => {
+  chess.undo();
+  board.position(chess.fen());
+  updateFenDisplay();
+  updateMoveHistory();
+});
+document.getElementById('btn-engine-move').addEventListener('click', () => {
+  if (topMovesCache.length) applyMove(topMovesCache[0].move);
+});
+
+// ── Init ──────────────────────────────────────────────────
+initBoard();
+renderStyleBars('balanced');
+</script>
+</body>
+</html>
