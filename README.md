@@ -2,8 +2,6 @@
 
 A **full-stack ML system** that learns to play chess *like a specific person* — not optimally — by conditioning a ResNet+GRU policy network on a player's history of game statistics. Two styles can be interpolated at inference time.
 
-> **Interview one-liner:** "I built a style-conditioned chess AI that encodes a player's last N games into a style embedding via a GRU, then fuses it with a ResNet board encoder to produce personalised move distributions — with a multi-task blunder-prediction head and a FastAPI + WebSocket backend served to a pure-HTML frontend."
-
 ---
 
 ## Architecture

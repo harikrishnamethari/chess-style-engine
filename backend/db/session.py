@@ -7,7 +7,11 @@ from sqlalchemy.orm import sessionmaker
 from backend.core.config import settings
 from backend.db.models import Base
 
-engine = create_engine(settings.database_url)
+engine_args = {}
+if settings.database_url.startswith("sqlite"):
+    engine_args["connect_args"] = {"check_same_thread": False}
+
+engine = create_engine(settings.database_url, **engine_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
